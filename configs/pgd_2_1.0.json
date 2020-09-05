@@ -1,0 +1,10 @@
+{
+    "attack_name":"PGD",
+    "epsilon":5.0,
+    "constraint": "2",
+    "attack_args": {
+        "abs_stepsize": 1.5,
+        "steps": 20
+    }
+}
+
