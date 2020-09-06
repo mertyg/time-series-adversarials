@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import foolbox as fb
 from tqdm import tqdm
+import numpy as np
 
 
 def train_step(args, model, loader, optimizer, batch_wrap = lambda x : x):
@@ -54,7 +55,7 @@ def eval(model, loader, args, batch_wrap=lambda x: x):
 
 
 def adversarial_eval(attack_fn, model, loader, epsilons):
-    fmodel = fb.PyTorchModel(model, bounds=(0, 1))
+    fmodel = fb.PyTorchModel(model, bounds=(-np.inf, np.inf))
     robust_accuracies = {}
 
     for epsilon in epsilons:
@@ -64,17 +65,17 @@ def adversarial_eval(attack_fn, model, loader, epsilons):
     for (data, target) in t_loader:
         t_loader.set_description(" ".join([f"{k}: {v.avg}" for k, v in robust_accuracies.items()]))
         _, advs, success = attack_fn(fmodel, data, target, epsilons=epsilons)
-        #ts1 = advs[0][0].detach().cpu().numpy()
+
+        #ts1 = advs[1][0].detach().cpu().numpy()
         #ts2 = data[0].detach().cpu().numpy()
         #import matplotlib
         #matplotlib.use("TkAgg")
         #import matplotlib.pyplot as plt
-        #import numpy as np
         #plt.plot(np.arange(ts1.shape[0]), ts1, label="adversarial")
         #plt.plot(np.arange(ts2.shape[0]), ts2, label="regular")
         #plt.legend()
         #plt.savefig("./comparison.png")
-        #exit(1)
+
         robust_accuracy = 1 - success.float().mean(axis=-1)
         N = target.size(0)
         for eps, accuracy in zip(epsilons, robust_accuracy):
