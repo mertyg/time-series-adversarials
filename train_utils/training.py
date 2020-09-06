@@ -54,7 +54,7 @@ def eval(model, loader, args, batch_wrap=lambda x: x):
     return report
 
 
-def adversarial_eval(attack_fn, model, loader, epsilons):
+def adversarial_eval(attack_fn, model, loader, epsilons, args):
     fmodel = fb.PyTorchModel(model, bounds=(-np.inf, np.inf))
     robust_accuracies = {}
 
@@ -63,6 +63,7 @@ def adversarial_eval(attack_fn, model, loader, epsilons):
 
     t_loader = tqdm(loader)
     for (data, target) in t_loader:
+        data, target = data.to(args.device), target.to(args.device)
         t_loader.set_description(" ".join([f"{k}: {v.avg}" for k, v in robust_accuracies.items()]))
         _, advs, success = attack_fn(fmodel, data, target, epsilons=epsilons)
 

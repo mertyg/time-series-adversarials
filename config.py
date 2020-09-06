@@ -13,7 +13,7 @@ def get_arg_parser():
     parser.add_argument("--batch-size", default=16, type=int)
     parser.add_argument("--test-batch-size", default=1024, type=int)
     parser.add_argument("--workers", default=4, type=int)
-    parser.add_argument("--max-epochs", default=500, type=int)
+    parser.add_argument("--max-epochs", default=50, type=int)
     parser.add_argument("--eval-freq", default=5, type=int)
     parser.add_argument("--adversarial-eval", action="store_true")
     parser.add_argument("--attack-config", default="./configs/pgd_inf_0.1.json")

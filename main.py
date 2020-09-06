@@ -3,6 +3,7 @@ from models import get_model
 from config import get_arg_parser
 from train_utils import train_step, eval, adversarial_eval, save_ckpt, load_ckpt
 import torch.optim as optim
+import torch.nn as nn
 import numpy as np
 import json
 from attack_utils import get_attack_fn
@@ -21,13 +22,15 @@ if __name__ == "__main__":
     if args.resume:
         model, optimizer, best, current_epoch = load_ckpt(args, model, optimizer)
     current_epoch = 0
+    if args.device != "cpu":
+        model.cuda()
     if args.adversarial_eval:
         with open(args.attack_config, "r") as fp:
             attack_config = json.load(fp)
         model.eval()
         attack_fn, attack_config = get_attack_fn(attack_config)
-        train_res = adversarial_eval(attack_fn, model, train_loader, epsilons=[0, attack_config.epsilon])
-        val_res = adversarial_eval(attack_fn, model, test_loader, epsilons=[0, attack_config.epsilon])
+        train_res = adversarial_eval(attack_fn, model, train_loader, epsilons=[0, attack_config.epsilon], args=args)
+        val_res = adversarial_eval(attack_fn, model, test_loader, epsilons=[0, attack_config.epsilon], args=args)
 
         res_folder = os.path.join(args.base_dir, args.dataset, args.model, f"{attack_config.attack_name}_{attack_config.constraint}_{attack_config.epsilon}")
         if not os.path.isdir(res_folder):

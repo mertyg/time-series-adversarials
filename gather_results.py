@@ -28,8 +28,8 @@ for ds in os.listdir(base_dir):
                 res["TrainAdversarialAccuracy"] = train_dict[attack_eps]
             with open(val_file, "r") as fp:
                 val_dict = json.load(fp)
-                res["TrainRegularAccuracy"] = val_dict["0"]
-                res["TrainAdversarialAccuracy"] = val_dict[attack_eps]
+                res["ValRegularAccuracy"] = val_dict["0"]
+                res["ValAdversarialAccuracy"] = val_dict[attack_eps]
             results.append(res)
 
 pd.DataFrame.from_records(results).to_csv("./timeseries.csv")

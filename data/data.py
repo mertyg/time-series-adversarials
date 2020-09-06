@@ -4,6 +4,7 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision.transforms import Compose, ToTensor
 import numpy as np
 from sklearn import preprocessing
+import os
 
 
 class UCRDataset(Dataset):
@@ -35,6 +36,11 @@ def load_dataset(args):
     dataset_name = args.dataset.split("_")[1]
     print(f"Trying to fetch {dataset_name}")
     datasets = UCR_UEA_datasets()
+    datasets._data_dir = os.path.join(args.base_dir, "dataset")
+
+    if not os.path.isdir(datasets._data_dir):
+        os.makedirs(datasets._data_dir)
+
     X_train, y_train, X_test, y_test = datasets.load_dataset(dataset_name)
 
 
