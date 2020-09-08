@@ -75,18 +75,18 @@ def adversarial_eval(attack_fn, model, loader, epsilons, args):
         t_loader.set_description(" ".join([f"{k}: {v.avg}" for k, v in robust_accuracies.items()]))
         _, advs, success = attack_fn(fmodel, data, target, epsilons=epsilons)
 
-        ts1 = advs[1].detach().cpu().numpy()
-        ts2 = data.detach().cpu().numpy()
-        import matplotlib
-        matplotlib.use("TkAgg")
-        import matplotlib.pyplot as plt
-        fig, axs = plt.subplots(ts1.shape[0], 1, figsize=(10, 80))
-        for i in range(ts1.shape[0]):
-            axs[i].plot(np.arange(ts1[i].shape[0]), ts1[i], label="adversarial")
-            axs[i].plot(np.arange(ts2[i].shape[0]), ts2[i], label="regular")
-            axs[i].legend()
-        fig.savefig("./comparison.png")
-        exit(1)
+        #ts1 = advs[1].detach().cpu().numpy()
+        #ts2 = data.detach().cpu().numpy()
+        #import matplotlib
+        #matplotlib.use("TkAgg")
+        #import matplotlib.pyplot as plt
+        #fig, axs = plt.subplots(ts1.shape[0], 1, figsize=(10, 80))
+        #for i in range(ts1.shape[0]):
+        #    axs[i].plot(np.arange(ts1[i].shape[0]), ts1[i], label="adversarial")
+        #    axs[i].plot(np.arange(ts2[i].shape[0]), ts2[i], label="regular")
+        #    axs[i].legend()
+        #fig.savefig("./comparison.png")
+        #exit(1)
         robust_accuracy = 1 - success.float().mean(axis=-1)
         N = target.size(0)
         for eps, accuracy in zip(epsilons, robust_accuracy):
