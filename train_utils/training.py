@@ -20,7 +20,7 @@ def train_step(args, model, loader, optimizer, batch_wrap = lambda x : x):
             output, distances = model(data, return_dist=args.distance_loss)
             loss = F.nll_loss(F.log_softmax(output), target.long())
             dist_loss = distances.mean()
-            loss = loss+dist_loss*0.01
+            loss = loss+dist_loss
         else:
             output = model(data)
             loss = F.nll_loss(F.log_softmax(output), target.long())
@@ -32,14 +32,20 @@ def eval(model, loader, args, batch_wrap=lambda x: x):
 
     model.eval()
     losses = AverageMeter()
+    if args.distance_loss and args.model=="ShapeletNet":
+        dist_loss = AverageMeter()
     top1 = AverageMeter()
     top5 = AverageMeter()
     with torch.no_grad():
         for (inputs, targets) in batch_wrap(loader):
             inputs, targets = inputs.to(args.device), targets.to(args.device)
-            outputs = model(inputs)
-            loss = F.nll_loss(F.log_softmax(outputs), targets)
             N = targets.size(0)
+            if args.distance_loss and args.model=="ShapeletNet":
+                outputs, dists = model(inputs, args.distance_loss)
+                dist_loss.update(dists.mean(), N)
+            else:
+                outputs = model(inputs)
+            loss = F.nll_loss(F.log_softmax(outputs), targets)
 
             if loader.dataset.output_size < 5:
                 prec1 = accuracy(outputs, targets, topk=[1])
@@ -47,7 +53,6 @@ def eval(model, loader, args, batch_wrap=lambda x: x):
             else:
                 prec1, prec5 = accuracy(outputs, targets, topk=(1, 5))
                 top5.update(prec5[0], N)
-
             losses.update(loss.item(), N)
             top1.update(prec1[0], N)
 
@@ -59,10 +64,13 @@ def eval(model, loader, args, batch_wrap=lambda x: x):
         top5_acc = top5.avg
         report = {"Top1": top1_acc.item(), "Top5": top5_acc.item(), "Loss": loss}
 
+    if args.distance_loss:
+        report.update({"DistanceLoss": dist_loss.avg.item()})
     return report
 
 
 def adversarial_eval(attack_fn, model, loader, epsilons, args):
+    model.eval()
     fmodel = fb.PyTorchModel(model, bounds=(-np.inf, np.inf))
     robust_accuracies = {}
 

@@ -23,21 +23,17 @@ class ShapeletNet(nn.Module):
         self.shapelets = nn.Parameter(self.init_shapelets(args, loader))
         self.relu = nn.ReLU()
         self.fc1 = nn.Linear(self.n_shapelets*self.n_variates, loader.dataset.output_size)
-        #self.fc1 = nn.Linear(5*self.n_shapelets, 256)
-        #self.fc2 = nn.Linear(256, 512)
-        #self.fc3 = nn.Linear(512, 512)
-        #self.fc4 = nn.Linear(512, loader.dataset.output_size)
-        self.dropout = nn.Dropout(p=0.2)
+        self.dropout = lambda x : x
 
     def init_shapelets(self, args, loader, n_shapelets=5):
         n_variates = loader.dataset.n_variates
-        shapelets = 1e-2 * torch.randn((1, n_shapelets, n_variates, self.bag_size, 1))
+        shapelets = 0.1 * torch.randn((1, n_shapelets, n_variates, self.bag_size, 1))
         self.n_shapelets = n_shapelets
         return shapelets
 
     def convert_to_bags(self, data):
         bag_size = self.bag_size
-        shift_size = self.bag_size // 4
+        shift_size = self.bag_size // 2
         bags = []
         window_marker = 0
         # Data: BatchSize x N_Variates X TS_length
@@ -56,25 +52,24 @@ class ShapeletNet(nn.Module):
         shapelets = self.shapelets
         # Batch_size x N_shapelets x N_variates x bag_size x N_bags
         diff = torch.norm(input-shapelets, p=2, dim=3)
-        #dist_features = diff.view(diff.shape[0], -1)
-        #max_features = diff.max(dim=-1)[0]
-        #dist_features = torch.cat([min_features, max_features], dim=1)
-        #dist_features = min_features
-        # Batch_size x 2N_shapelets x N_variates
         return diff
+
+    def get_similarity_shapelets(self):
+        shapelets = self.shapelets.view(self.n_shapelets, self.bag_size)
+        prod = torch.einsum("ik, jk -> ij", shapelets, shapelets)
+        norms = torch.norm(shapelets, dim=1)
+        norms_mult = torch.einsum("i, j-> ij", norms, norms)
+        cos_sim = prod/norms_mult
+        return cos_sim
 
     def forward(self, x, return_dist=False):
         # X is (batch_size, input_size, n_variates)
         x = x.view(x.shape[0], x.shape[2], x.shape[1])
         x = self.convert_to_bags(x) # batch_size x n_variates x bag_size x n_bags
-        diffs = self.get_distance_features(x) # batch_size x n_variates x n_shapelets
+        diffs = self.get_distance_features(x) # batch_size x n_variates x n_shapelets x n_bags
         dist_features = diffs.min(dim=-1)[0].view(diffs.shape[0], -1)
+        out = self.fc1(self.dropout(dist_features))
         if return_dist:
-            return self.fc1(dist_features), diffs
-        return self.fc1(dist_features)
-        #out = self.dropout(self.relu(self.fc1(dist_features)))
-        #out = self.dropout(self.relu(self.fc2(out)))
-        #out = self.dropout(self.relu(self.fc3(out)))
-        #out = self.fc4(out)
-        #return out
+            return out, self.get_similarity_shapelets()
+        return out
 
