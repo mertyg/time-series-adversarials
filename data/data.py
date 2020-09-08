@@ -44,10 +44,10 @@ def load_dataset(args):
     X_train, y_train, X_test, y_test = datasets.load_dataset(dataset_name)
 
 
-    min_x = np.min(X_train, axis=(0, 1), keepdims=True)
-    max_x = np.min(X_train, axis=(0, 1), keepdims=True)
-    X_train = (X_train-min_x)/max_x
-    X_test = (X_test-min_x)/max_x
+    #min_x = np.min(X_train, axis=(0, 1), keepdims=True)
+    #max_x = np.min(X_train, axis=(0, 1), keepdims=True)
+    #X_train = (X_train-min_x)/max_x
+    #X_test = (X_test-min_x)/max_x
 
     mu_train = np.mean(X_train, axis=1, keepdims=True)
     std_train = np.std(X_train, axis=1, keepdims=True)

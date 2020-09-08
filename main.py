@@ -17,7 +17,7 @@ if __name__ == "__main__":
     model = get_model(args)(args, train_loader)
 
     optimizer = optim.Adam(model.parameters(), lr=0.01)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.5)
     best = np.inf
     if args.resume:
         model, optimizer, best, current_epoch = load_ckpt(args, model, optimizer)
