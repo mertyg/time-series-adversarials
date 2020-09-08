@@ -17,5 +17,5 @@ def get_arg_parser():
     parser.add_argument("--eval-freq", default=5, type=int)
     parser.add_argument("--adversarial-eval", action="store_true")
     parser.add_argument("--attack-config", default="./configs/pgd_inf_0.1.json")
-
+    parser.add_argument("--distance-loss", action="store_true")
     return parser

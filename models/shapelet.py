@@ -37,9 +37,10 @@ class ShapeletNet(nn.Module):
 
     def convert_to_bags(self, data):
         bag_size = self.bag_size
-        shift_size = self.bag_size // 2
+        shift_size = self.bag_size // 4
         bags = []
         window_marker = 0
+        # Data: BatchSize x N_Variates X TS_length
         while window_marker + bag_size < data.shape[2]:
             fragment = data[:, :, window_marker: window_marker+bag_size].unsqueeze(-1)
             bags.append(fragment)
@@ -56,20 +57,20 @@ class ShapeletNet(nn.Module):
         # Batch_size x N_shapelets x N_variates x bag_size x N_bags
         diff = torch.norm(input-shapelets, p=2, dim=3)
         #dist_features = diff.view(diff.shape[0], -1)
-        dist_features = diff
-        min_features = diff.min(dim=-1)[0]
         #max_features = diff.max(dim=-1)[0]
         #dist_features = torch.cat([min_features, max_features], dim=1)
-        dist_features = min_features
+        #dist_features = min_features
         # Batch_size x 2N_shapelets x N_variates
-        dist_features = dist_features.view(dist_features.shape[0], -1)
-        return dist_features
+        return diff
 
-    def forward(self, x):
+    def forward(self, x, return_dist=False):
         # X is (batch_size, input_size, n_variates)
         x = x.view(x.shape[0], x.shape[2], x.shape[1])
         x = self.convert_to_bags(x) # batch_size x n_variates x bag_size x n_bags
-        dist_features = self.get_distance_features(x) # batch_size x n_variates x n_shapelets
+        diffs = self.get_distance_features(x) # batch_size x n_variates x n_shapelets
+        dist_features = diffs.min(dim=-1)[0].view(diffs.shape[0], -1)
+        if return_dist:
+            return self.fc1(dist_features), diffs
         return self.fc1(dist_features)
         #out = self.dropout(self.relu(self.fc1(dist_features)))
         #out = self.dropout(self.relu(self.fc2(out)))
