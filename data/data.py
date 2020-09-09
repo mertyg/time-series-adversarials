@@ -59,6 +59,12 @@ def load_dataset(args):
     X_train = (X_train-mu_train)/std_train
     X_test = (X_test-mu_test)/std_test
 
+    norm_mean = np.mean(X_train, axis=0, keepdims=True)
+    norm_std = np.std(X_test, axis=0, keepdims=True)
+    X_train = (X_train-norm_mean)/norm_std
+    X_test = (X_test-norm_mean)/norm_std
+
+
     le = preprocessing.LabelEncoder()
     le.fit(np.concatenate([y_train, y_test], axis=0))
     y_train = le.transform(y_train)
