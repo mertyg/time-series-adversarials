@@ -20,7 +20,7 @@ def train_step(args, model, loader, optimizer, batch_wrap = lambda x : x):
             output, distances = model(data, return_dist=args.distance_loss)
             loss = F.nll_loss(F.log_softmax(output), target.long())
             dist_loss = distances.mean()
-            loss = loss+dist_loss
+            loss = loss+dist_loss*0.1
         else:
             output = model(data)
             loss = F.nll_loss(F.log_softmax(output), target.long())

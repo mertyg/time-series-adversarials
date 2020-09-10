@@ -56,11 +56,14 @@ class ShapeletNet(nn.Module):
 
     def get_similarity_shapelets(self):
         shapelets = self.shapelets.view(self.n_shapelets, self.bag_size)
-        prod = torch.einsum("ik, jk -> ij", shapelets, shapelets)
-        norms = torch.norm(shapelets, dim=1)
-        norms_mult = torch.einsum("i, j-> ij", norms, norms)
-        cos_sim = prod/norms_mult
-        return cos_sim
+        #prod = torch.einsum("ik, jk -> ij", shapelets, shapelets)
+        #norms = torch.norm(shapelets, dim=1)
+        #norms_mult = torch.einsum("i, j-> ij", norms, norms)
+        #cos_sim = prod/norms_mult
+
+        mean_shapelet = shapelets.mean(dim=0, keepdim=True)
+        dist = torch.norm(mean_shapelet-shapelets, p=2)
+        return -dist
 
     def forward(self, x, return_dist=False):
         # X is (batch_size, input_size, n_variates)
