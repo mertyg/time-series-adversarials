@@ -2,6 +2,7 @@ import torch
 import os
 import torch.nn as nn
 
+
 def save_ckpt(args, model, optimizer, epoch, train_res, val_res, c_type="latest"):
     ckpt_folder = os.path.join(args.base_dir, args.dataset, args.model)
     if not os.path.isdir(ckpt_folder):

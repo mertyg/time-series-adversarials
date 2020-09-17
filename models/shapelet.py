@@ -22,8 +22,10 @@ class ShapeletNet(nn.Module):
         print("N_variates: ", self.n_variates)
         self.shapelets = nn.Parameter(self.init_shapelets(args, loader))
         self.relu = nn.ReLU()
-        self.fc1 = nn.Linear(self.n_shapelets*self.n_variates, loader.dataset.output_size)
-        self.dropout = lambda x : x
+        self.fc1 = nn.Linear(2*self.n_shapelets*self.n_variates, loader.dataset.output_size)
+        self.bn = nn.BatchNorm1d(num_features=2*self.n_shapelets*self.n_variates)
+
+        self.softmax = nn.Softmax(dim=-1)
 
     def init_shapelets(self, args, loader, n_shapelets=5):
         n_variates = loader.dataset.n_variates
@@ -60,7 +62,6 @@ class ShapeletNet(nn.Module):
         #norms = torch.norm(shapelets, dim=1)
         #norms_mult = torch.einsum("i, j-> ij", norms, norms)
         #cos_sim = prod/norms_mult
-
         mean_shapelet = shapelets.mean(dim=0, keepdim=True)
         dist = torch.norm(mean_shapelet-shapelets, p=2)
         return -dist
@@ -70,9 +71,11 @@ class ShapeletNet(nn.Module):
         x = x.view(x.shape[0], x.shape[2], x.shape[1])
         x = self.convert_to_bags(x) # batch_size x n_variates x bag_size x n_bags
         diffs = self.get_distance_features(x) # batch_size x n_variates x n_shapelets x n_bags
-        dist_features = diffs.min(dim=-1)[0].view(diffs.shape[0], -1)
-        out = self.fc1(self.dropout(dist_features))
+        dist_min = diffs.min(dim=-1)[0].view(diffs.shape[0], -1)
+        dist_avg = diffs.mean(dim=-1).view(diffs.shape[0], -1)
+        dist_features = torch.cat([dist_min, dist_avg], dim=1)
+        dist_features = self.bn(dist_features)
+        out = self.fc1(dist_features)
         if return_dist:
-            return out, self.get_similarity_shapelets()
+            return out, self.get_similarity_shapelets()+dist_min.mean()
         return out
-

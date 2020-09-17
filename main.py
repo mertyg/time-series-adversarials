@@ -16,7 +16,7 @@ if __name__ == "__main__":
     train_loader, test_loader = load_dataset(args)
     model = get_model(args)(args, train_loader)
 
-    optimizer = optim.Adam(model.parameters(), lr=0.01)
+    optimizer = optim.Adam(model.parameters(), lr=0.01, weight_decay=0.001)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.9)
     best = np.inf
     if args.resume:
